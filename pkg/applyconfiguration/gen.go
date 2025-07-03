@@ -46,7 +46,7 @@ var (
 	enablePkgMarker   = markers.Must(markers.MakeDefinition("kubebuilder:ac:generate", markers.DescribesPackage, false))
 	outputPkgMarker   = markers.Must(markers.MakeDefinition("kubebuilder:ac:output:package", markers.DescribesPackage, ""))
 	enableTypeMarker  = markers.Must(markers.MakeDefinition("kubebuilder:ac:generate", markers.DescribesType, false))
-	openapiPathMarker = markers.Must(markers.MakeDefinition("kubebuilder:ac:openapi:path", markers.DescribesPackage, false))
+	openapiPathMarker = markers.Must(markers.MakeDefinition("kubebuilder:ac:openapi:path", markers.DescribesPackage, ""))
 )
 
 const defaultOutputPackage = "applyconfiguration"
@@ -69,7 +69,7 @@ func (Generator) CheckFilter() loader.NodeFilter {
 
 func (Generator) RegisterMarkers(into *markers.Registry) error {
 	if err := markers.RegisterAll(into,
-		isCRDMarker, enablePkgMarker, enableTypeMarker, outputPkgMarker); err != nil {
+		isCRDMarker, enablePkgMarker, enableTypeMarker, outputPkgMarker, openapiPathMarker); err != nil {
 		return err
 	}
 
@@ -86,7 +86,7 @@ func (Generator) RegisterMarkers(into *markers.Registry) error {
 	into.AddHelp(
 		outputPkgMarker, markers.SimpleHelp("apply", "overrides the default output package for the applyconfiguration generation, supports relative paths to the API directory. The default value is \"applyconfiguration\""))
 	into.AddHelp(
-		openapiPathMarker, markers.SimpleHelp("apply", "specifies the path to the OpenAPI definition"))
+		openapiPathMarker, markers.SimpleHelp("apply", "specifies the path to the OpenAPI schema"))
 	return nil
 }
 
