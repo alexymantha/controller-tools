@@ -209,7 +209,8 @@ func (ctx *ObjectGenCtx) generateForPackage(root *loader.Package) error {
 	arguments.OutputPkg = filepath.Join(root.Package.PkgPath, outpkg)
 
 	if path := openapiPath(ctx.Collector, root); path != "" {
-		arguments.OpenAPISchemaFilePath = path
+		arguments.OpenAPISchemaFilePath = filepath.Join(root.Dir, path)
+		fmt.Printf("OpenAPI Path: %s\n", arguments.OpenAPISchemaFilePath)
 	}
 
 	// The following code is based on gengo/v2.Execute.
