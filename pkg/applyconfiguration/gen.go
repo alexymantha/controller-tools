@@ -42,10 +42,11 @@ import (
 // Based on deepcopy gen but with legacy marker support removed.
 
 var (
-	isCRDMarker      = markers.Must(markers.MakeDefinition("kubebuilder:resource", markers.DescribesType, crdmarkers.Resource{}))
-	enablePkgMarker  = markers.Must(markers.MakeDefinition("kubebuilder:ac:generate", markers.DescribesPackage, false))
-	outputPkgMarker  = markers.Must(markers.MakeDefinition("kubebuilder:ac:output:package", markers.DescribesPackage, ""))
-	enableTypeMarker = markers.Must(markers.MakeDefinition("kubebuilder:ac:generate", markers.DescribesType, false))
+	isCRDMarker       = markers.Must(markers.MakeDefinition("kubebuilder:resource", markers.DescribesType, crdmarkers.Resource{}))
+	enablePkgMarker   = markers.Must(markers.MakeDefinition("kubebuilder:ac:generate", markers.DescribesPackage, false))
+	outputPkgMarker   = markers.Must(markers.MakeDefinition("kubebuilder:ac:output:package", markers.DescribesPackage, ""))
+	enableTypeMarker  = markers.Must(markers.MakeDefinition("kubebuilder:ac:generate", markers.DescribesType, false))
+	openapiPathMarker = markers.Must(markers.MakeDefinition("kubebuilder:ac:openapi:path", markers.DescribesPackage, false))
 )
 
 const defaultOutputPackage = "applyconfiguration"
@@ -84,6 +85,8 @@ func (Generator) RegisterMarkers(into *markers.Registry) error {
 		enablePkgMarker, markers.SimpleHelp("apply", "overrides enabling or disabling applyconfiguration generation for the package"))
 	into.AddHelp(
 		outputPkgMarker, markers.SimpleHelp("apply", "overrides the default output package for the applyconfiguration generation, supports relative paths to the API directory. The default value is \"applyconfiguration\""))
+	into.AddHelp(
+		openapiPathMarker, markers.SimpleHelp("apply", "specifies the path to the OpenAPI definition"))
 	return nil
 }
 
@@ -119,6 +122,20 @@ func outputPkg(col *markers.Collector, pkg *loader.Package) string {
 	}
 
 	return defaultOutputPackage
+}
+
+func openapiPath(col *markers.Collector, pkg *loader.Package) string {
+	pkgMarkers, err := markers.PackageMarkers(col, pkg)
+	if err != nil {
+		return ""
+	}
+
+	pkgMarker := pkgMarkers.Get(openapiPathMarker.Name)
+	if pkgMarker != nil {
+		return pkgMarker.(string)
+	}
+
+	return ""
 }
 
 func isCRD(info *markers.TypeInfo) bool {
@@ -190,6 +207,10 @@ func (ctx *ObjectGenCtx) generateForPackage(root *loader.Package) error {
 
 	arguments.OutputDir = filepath.Join(root.Dir, outpkg)
 	arguments.OutputPkg = filepath.Join(root.Package.PkgPath, outpkg)
+
+	if path := openapiPath(ctx.Collector, root); path != "" {
+		arguments.OpenAPISchemaFilePath = path
+	}
 
 	// The following code is based on gengo/v2.Execute.
 	// We have lifted it from there so that we can adjust the markers on the types to make sure
